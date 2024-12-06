@@ -2,7 +2,6 @@ import os
 import openai
 import streamlit as st
 from PIL import Image
-import io
 
 # OpenAI API 키를 Streamlit Secrets에서 가져옵니다.
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -22,18 +21,15 @@ if uploaded_file is not None:
     
     # OpenAI API를 사용하여 분석 요청
     st.write("이미지 분석 중입니다. 잠시만 기다려 주세요...")
-    
+
     try:
-        # 이미지 데이터를 바이트로 변환
-        image_bytes = io.BytesIO(uploaded_file.read()).getvalue()
-        
-        # OpenAI API 호출 (샘플 예제)
+        # 업로드된 파일을 OpenAI API에서 처리할 수 있도록 파일 객체로 전달
+        uploaded_file.seek(0)  # 파일 포인터를 시작으로 재설정
         response = openai.Image.create(
-            file=image_bytes,  # 이미지 데이터를 바이트로 전달
+            file=uploaded_file,
             purpose="calorie_estimation"
         )
-        
-        # 응답 처리 (샘플 데이터 구조)
+        # 샘플 응답 처리
         calories = response.get("calories", "N/A")
         st.success(f"예상 칼로리: {calories} kcal")
     except Exception as e:
