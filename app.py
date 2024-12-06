@@ -1,28 +1,37 @@
 import os
 import openai
 import streamlit as st
+from PIL import Image
 
-# OpenAI API Key를 환경 변수에서 가져옵니다
-openai_api_key = os.getenv("OPENAI_API_KEY")
+# OpenAI API 키를 Streamlit Secrets에서 가져옵니다.
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-if not openai_api_key:
-    st.error("OpenAI API Key가 설정되지 않았습니다. 환경 변수를 확인하세요.")
-else:
-    openai.api_key = openai_api_key
-
+# Streamlit 앱 제목
 st.title("AI Calorie Calculator")
 st.write("음식 사진을 업로드하면 칼로리를 예측합니다.")
+st.write("음식 사진을 업로드하세요")
 
-uploaded_file = st.file_uploader("음식 사진을 업로드하세요", type=["jpg", "jpeg", "png"])
+# 파일 업로드 위젯
+uploaded_file = st.file_uploader("Drag and drop file here", type=["jpg", "jpeg", "png"])
 
-if uploaded_file:
-    st.image(uploaded_file, caption="업로드한 이미지", use_column_width=True)
-    st.write("이미지를 분석 중입니다...")
-
-    # OpenAI API 호출 (예: 이미지 분석)
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt="Describe the food in this image and estimate its calorie content.",
-        max_tokens=100,
-    )
-    st.write("결과:", response["choices"][0]["text"])
+if uploaded_file is not None:
+    # 업로드된 이미지를 표시
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
+    
+    # OpenAI API를 사용하여 분석 요청
+    st.write("이미지 분석 중입니다. 잠시만 기다려 주세요...")
+    
+    try:
+        # 이미지 데이터를 처리 (샘플 예제)
+        response = openai.Image.create(
+            file=uploaded_file,
+            purpose="calorie_estimation"
+        )
+        # 샘플 응답 처리
+        calories = response.get("calories", "N/A")
+        st.success(f"예상 칼로리: {calories} kcal")
+    except Exception as e:
+        st.error(f"예상 칼로리 계산 중 오류 발생: {e}")
+else:
+    st.info("이미지를 업로드하세요.")
