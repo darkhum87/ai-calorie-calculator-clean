@@ -29,14 +29,23 @@ if uploaded_file is not None:
     # OpenAI API를 사용하여 분석 요청
     st.write("이미지 분석 중입니다. 잠시만 기다려 주세요...")
     try:
-        # 이미지 데이터를 base64로 전달
-        response = openai.Completion.create(
-            model="text-davinci-003",  # 대체 가능한 모델
-            prompt=f"이미지를 분석해 칼로리를 추정하세요. 이미지 데이터: {img_base64}",
-            max_tokens=100
+        # GPT-4를 사용하여 이미지 데이터를 분석
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant for estimating food calorie content based on image descriptions.",
+                },
+                {
+                    "role": "user",
+                    "content": f"Estimate the calories of the food in the image. Base64 encoded image: {img_base64}",
+                },
+            ],
         )
-        # 샘플 응답 처리
-        st.success(f"예상 칼로리: {response['choices'][0]['text'].strip()} kcal")
+        # 응답에서 텍스트 추출
+        calories_estimation = response['choices'][0]['message']['content']
+        st.success(f"예상 칼로리: {calories_estimation}")
     except Exception as e:
         st.error(f"예상 칼로리 계산 중 오류 발생: {e}")
 else:
