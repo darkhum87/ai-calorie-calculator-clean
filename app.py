@@ -2,6 +2,8 @@ import os
 import openai
 import streamlit as st
 from PIL import Image
+import base64
+from io import BytesIO
 
 # OpenAI API 키를 Streamlit Secrets에서 가져옵니다.
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -18,20 +20,23 @@ if uploaded_file is not None:
     # 업로드된 이미지를 표시
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
-    
+
+    # 이미지를 base64로 인코딩
+    buffered = BytesIO()
+    image.save(buffered, format="JPEG")
+    img_base64 = base64.b64encode(buffered.getvalue()).decode()
+
     # OpenAI API를 사용하여 분석 요청
     st.write("이미지 분석 중입니다. 잠시만 기다려 주세요...")
-
     try:
-        # 업로드된 파일을 OpenAI API에서 처리할 수 있도록 파일 객체로 전달
-        uploaded_file.seek(0)  # 파일 포인터를 시작으로 재설정
-        response = openai.Image.create(
-            file=uploaded_file,
-            purpose="calorie_estimation"
+        # 이미지 데이터를 base64로 전달
+        response = openai.Completion.create(
+            model="text-davinci-003",  # 대체 가능한 모델
+            prompt=f"이미지를 분석해 칼로리를 추정하세요. 이미지 데이터: {img_base64}",
+            max_tokens=100
         )
         # 샘플 응답 처리
-        calories = response.get("calories", "N/A")
-        st.success(f"예상 칼로리: {calories} kcal")
+        st.success(f"예상 칼로리: {response['choices'][0]['text'].strip()} kcal")
     except Exception as e:
         st.error(f"예상 칼로리 계산 중 오류 발생: {e}")
 else:
