@@ -2,3 +2,5 @@ streamlit
 openai
 pillow
 transformers
+
+openai==0.28.0
